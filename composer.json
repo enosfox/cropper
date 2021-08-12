@@ -1,0 +1,35 @@
+{
+  "name": "kitsunecode/cropper",
+  "description": "It is a easy and simple PHP image cropper and cache thumb manager",
+  "keywords": [
+    "KitsuneCode",
+    "Upload",
+    "image thumb",
+    "image crop",
+    "image cache",
+    "thumbnails jpg",
+    "thumbnails png",
+    "thumbnails webp",
+    "webp converter"
+  ],
+  "homepage": "https://www.kitsunews.com",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Robson S. S. Silva",
+      "email": "devenos@icloud.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "ext-gd": "*",
+    "ext-mbstring": "*",
+    "ext-fileinfo": "*",
+    "rosell-dk/webp-convert": "2.5.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "KitsuneCode\\Cropper\\": "src"
+    }
+  }
+}
