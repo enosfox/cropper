@@ -77,7 +77,22 @@ class Cropper
     public function make(string $imagePath, int $width, int $height = null): ?string
     {
         if (!file_exists($imagePath)) {
-            return "Image not found";
+
+            $h = $height == null ? $width / 2 : $height;
+            $im = imagecreatetruecolor($width, $h);
+            $bg = imagecolorallocate($im, 145, 145, 145);
+            imagefill($im, 0, 0, $bg);
+
+            $text_color = imagecolorallocate($im, 110, 110, 110);
+
+            imagestring($im, 3, 5, 5,  'Error loading', $text_color);
+
+            // Save the image
+            imagewebp($im, "{$this->cachePath}/{$width}x{$height}-".time().".webp");
+
+            // Free up memory
+            imagedestroy($im);
+            return "{$this->cachePath}/{$width}x{$height}-".time().".webp";
         }
 
         $this->imagePath = $imagePath;
