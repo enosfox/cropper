@@ -39,7 +39,7 @@ class Cropper
      * Allow jpg and png to thumb and cache generate
      * @var array allowed media types
      */
-    private static $allowedExt = ['image/jpeg', "image/png"];
+    private static $allowedExt = ['image/jpeg', "image/png", "image/webp"];
 
     /**
      * Cropper constructor.
@@ -213,6 +213,10 @@ class Cropper
             return $this->fromPng($width, $height, $src_x, $src_y, $src_w, $src_h);
         }
 
+        if ($this->imageMime == "image/webp") {
+            return $this->fromWebp($width, $height, $src_x, $src_y, $src_w, $src_h);
+        }
+
         return null;
     }
 
@@ -266,6 +270,35 @@ class Cropper
     {
         $thumb = imagecreatetruecolor($width, $height);
         $source = imagecreatefrompng($this->imagePath);
+
+        imagealphablending($thumb, false);
+        imagesavealpha($thumb, true);
+        imagecopyresampled($thumb, $source, 0, 0, $src_x, $src_y, $width, $height, $src_w, $src_h);
+        imagepng($thumb, "{$this->cachePath}/{$this->imageName}.png", $this->compressor);
+
+        imagedestroy($thumb);
+        imagedestroy($source);
+
+        if ($this->webP) {
+            return $this->toWebP("{$this->cachePath}/{$this->imageName}.png");
+        }
+
+        return "{$this->cachePath}/{$this->imageName}.png";
+    }
+
+    /**
+     * @param int $width
+     * @param int $height
+     * @param int $src_x
+     * @param int $src_y
+     * @param int $src_w
+     * @param int $src_h
+     * @return string
+     */
+    private function fromWebp(int $width, int $height, int $src_x, int $src_y, int $src_w, int $src_h): string
+    {
+        $thumb = imagecreatetruecolor($width, $height);
+        $source = imagecreatefromwebp($this->imagePath);
 
         imagealphablending($thumb, false);
         imagesavealpha($thumb, true);
