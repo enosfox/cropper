@@ -135,9 +135,10 @@ class Cropper
      */
     protected function name(string $name, int $width = null, int $height = null): string
     {
-        $filterName = filter_var(mb_strtolower(pathinfo($name)["filename"]), FILTER_SANITIZE_STRIPPED);
+        $filterName = filter_var(mb_strtolower(pathinfo($name)["filename"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $formats = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜüÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûýýþÿRr"!@#$%&*()_-+={[}]/?;:.,\\\'<>°ºª';
         $replace = 'aaaaaaaceeeeiiiidnoooooouuuuuybsaaaaaaaceeeeiiiidnoooooouuuyybyRr                                 ';
+        $filterName = html_entity_decode($filterName);
         $trimName = trim(strtr(utf8_decode($filterName), utf8_decode($formats), $replace));
         $name = str_replace(["-----", "----", "---", "--"], "-", str_replace(" ", "-", $trimName));
 
@@ -146,6 +147,26 @@ class Cropper
         $heightName = ($height ? "x{$height}" : "");
 
         return "{$name}{$widthName}{$heightName}-{$hash}";
+    }
+    
+    function str_slug(string $string): string
+    {
+        $string = filter_var(mb_strtolower($string), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $formats = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜüÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûýýþÿRr"!@#$%&*()_-+={[}]/?;:.,\\\'<>°ºª';
+        $replace = 'aaaaaaaceeeeiiiidnoooooouuuuuybsaaaaaaaceeeeiiiidnoooooouuuyybyRr                                 ';
+
+        $string = html_entity_decode($string);
+
+        $slug = str_replace(
+            ["-----", "----", "---", "--"],
+            "-",
+            str_replace(
+                " ",
+                "-",
+                trim(strtr(utf8_decode($string), utf8_decode($formats), $replace))
+            )
+        );
+        return $slug;
     }
 
     /**
