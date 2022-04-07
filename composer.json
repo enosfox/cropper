@@ -25,7 +25,7 @@
     "ext-gd": "*",
     "ext-mbstring": "*",
     "ext-fileinfo": "*",
-    "rosell-dk/webp-convert": "2.5.0"
+    "rosell-dk/webp-convert": "*"
   },
   "autoload": {
     "psr-4": {

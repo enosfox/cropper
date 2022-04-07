@@ -324,16 +324,16 @@ class Cropper
         imagealphablending($thumb, false);
         imagesavealpha($thumb, true);
         imagecopyresampled($thumb, $source, 0, 0, $src_x, $src_y, $width, $height, $src_w, $src_h);
-        imagepng($thumb, "{$this->cachePath}/{$this->imageName}.png", $this->compressor);
+        imagewebp($thumb, "{$this->cachePath}/{$this->imageName}.webp", $this->compressor);
 
         imagedestroy($thumb);
         imagedestroy($source);
 
         if ($this->webP) {
-            return $this->toWebP("{$this->cachePath}/{$this->imageName}.png");
+            return $this->toWebP("{$this->cachePath}/{$this->imageName}.webp");
         }
 
-        return "{$this->cachePath}/{$this->imageName}.png";
+        return "{$this->cachePath}/{$this->imageName}.webp";
     }
 
     /**
