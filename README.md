@@ -23,7 +23,7 @@ KitsuneCode é um conjunto de pequenos e otimizados componentes PHP para tarefas
 Cropper is available via Composer:
 
 ```bash
-"kitsunecode/cropper": "1.0.*"
+"kitsunecode/cropper": "2.0.*"
 ```
 
 or run

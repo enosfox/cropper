@@ -15,31 +15,37 @@ use WebPConvert\WebPConvert;
 class Cropper
 {
     /** @var string */
-    private $cachePath;
+    private string $cachePath;
 
     /** @var string */
-    private $imagePath;
+    private string $imagePath;
 
     /** @var string */
-    private $imageName;
+    private string $imageName;
 
     /** @var string */
-    private $imageMime;
+    private string $imageMime;
 
     /** @var int */
-    private $quality;
+    private int $quality;
 
     /** @var int */
-    private $compressor;
+    private int $compressor;
 
-    /**@var bool */
-    private $webP;
+    /** @var int */
+    private int $qualityWebP;
+
+    /** @var bool */
+    private bool $webP;
 
     /**
      * Allow jpg and png to thumb and cache generate
      * @var array allowed media types
      */
-    private static $allowedExt = ['image/jpeg', "image/png", "image/webp"];
+    private static array $allowedExt = ['image/jpeg', "image/png", "image/webp"];
+
+    /** @var ConversionFailedException */
+    public ConversionFailedException $exception;
 
     /**
      * Cropper constructor.
@@ -52,11 +58,12 @@ class Cropper
      * @param bool $webP
      * @throws Exception
      */
-    public function __construct(string $cachePath, int $quality = 75, int $compressor = 5, bool $webP = false)
+    public function __construct(string $cachePath, int $quality = 75, int $compressor = 5, int $qualityWebP = 75, bool $webP = false)
     {
         $this->cachePath = $cachePath;
         $this->quality = $quality;
         $this->compressor = $compressor;
+        $this->qualityWebP = $qualityWebP;
         $this->webP = $webP;
 
         if (!file_exists($this->cachePath) || !is_dir($this->cachePath)) {
@@ -77,22 +84,7 @@ class Cropper
     public function make(string $imagePath, int $width, int $height = null): ?string
     {
         if (!file_exists($imagePath)) {
-
-            $h = $height == null ? $width / 2 : $height;
-            $im = imagecreatetruecolor($width, $h);
-            $bg = imagecolorallocate($im, 145, 145, 145);
-            imagefill($im, 0, 0, $bg);
-
-            $text_color = imagecolorallocate($im, 110, 110, 110);
-
-            imagestring($im, 3, 5, 5,  'Error loading', $text_color);
-
-            // Save the image
-            imagewebp($im, "{$this->cachePath}/{$width}x{$height}-".time().".webp");
-
-            // Free up memory
-            imagedestroy($im);
-            return "{$this->cachePath}/{$width}x{$height}-".time().".webp";
+            return "Image not found";
         }
 
         $this->imagePath = $imagePath;
@@ -100,7 +92,7 @@ class Cropper
         $this->imageMime = mime_content_type($this->imagePath);
 
         if (!in_array($this->imageMime, self::$allowedExt)) {
-            return "Not a valid JPG or PNG image";
+            return "Not a valid JPG or PNG or WEBP image";
         }
 
         return $this->image($width, $height);
@@ -129,16 +121,15 @@ class Cropper
 
     /**
      * @param string $name
-     * @param int $width
-     * @param int $height
+     * @param int|null $width
+     * @param int|null $height
      * @return string
      */
     protected function name(string $name, int $width = null, int $height = null): string
     {
         $filterName = filter_var(mb_strtolower(pathinfo($name)["filename"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $formats = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜüÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûýýþÿRr"!@#$%&*()_-+={[}]/?;:.,\\\'<>°ºª';
-        $replace = 'aaaaaaaceeeeiiiidnoooooouuuuuybsaaaaaaaceeeeiiiidnoooooouuuyybyRr                                 ';
-        $filterName = html_entity_decode($filterName);
+        $replace = 'aaaaaaaceeeeiiiidnoooooouuuuuybsaaaaaaaceeeeiiiidnoooooouuuyybyrr                                 ';
         $trimName = trim(strtr(utf8_decode($filterName), utf8_decode($formats), $replace));
         $name = str_replace(["-----", "----", "---", "--"], "-", str_replace(" ", "-", $trimName));
 
@@ -147,26 +138,6 @@ class Cropper
         $heightName = ($height ? "x{$height}" : "");
 
         return "{$name}{$widthName}{$heightName}-{$hash}";
-    }
-    
-    function str_slug(string $string): string
-    {
-        $string = filter_var(mb_strtolower($string), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $formats = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜüÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûýýþÿRr"!@#$%&*()_-+={[}]/?;:.,\\\'<>°ºª';
-        $replace = 'aaaaaaaceeeeiiiidnoooooouuuuuybsaaaaaaaceeeeiiiidnoooooouuuyybyRr                                 ';
-
-        $string = html_entity_decode($string);
-
-        $slug = str_replace(
-            ["-----", "----", "---", "--"],
-            "-",
-            str_replace(
-                " ",
-                "-",
-                trim(strtr(utf8_decode($string), utf8_decode($formats), $replace))
-            )
-        );
-        return $slug;
     }
 
     /**
@@ -214,17 +185,18 @@ class Cropper
         $cmp_y = $src_h / $height;
 
         if ($cmp_x > $cmp_y) {
+            $src_x = round(($src_w - ($src_w / $cmp_x * $cmp_y)) / 2);
             $src_w = round($src_w / $cmp_x * $cmp_y);
-            $src_x = round(($src_w - ($src_w / $cmp_x * $cmp_y))); //2
         } elseif ($cmp_y > $cmp_x) {
+            $src_y = round(($src_h - ($src_h / $cmp_y * $cmp_x)) / 2);
             $src_h = round($src_h / $cmp_y * $cmp_x);
-            $src_y = round(($src_h - ($src_h / $cmp_y * $cmp_x))); //2
         }
 
+        $height = (int)$height;
         $src_x = (int)$src_x;
+        $src_y = (int)$src_y;
+        $src_w = (int)$src_w;
         $src_h = (int)$src_h;
-        $src_y = (int)$src_y;
-        $src_y = (int)$src_y;
 
         if ($this->imageMime == "image/jpeg") {
             return $this->fromJpg($width, $height, $src_x, $src_y, $src_w, $src_h);
@@ -321,17 +293,17 @@ class Cropper
         $thumb = imagecreatetruecolor($width, $height);
         $source = imagecreatefromwebp($this->imagePath);
 
-        imagealphablending($thumb, false);
+        imagealphablending($thumb, true);
         imagesavealpha($thumb, true);
         imagecopyresampled($thumb, $source, 0, 0, $src_x, $src_y, $width, $height, $src_w, $src_h);
-        imagewebp($thumb, "{$this->cachePath}/{$this->imageName}.webp", $this->compressor);
+        imagewebp($thumb, "{$this->cachePath}/{$this->imageName}.webp", $this->qualityWebP);
 
         imagedestroy($thumb);
         imagedestroy($source);
 
-        if ($this->webP) {
-            return $this->toWebP("{$this->cachePath}/{$this->imageName}.webp");
-        }
+        // if ($this->webP) {
+        //     return $this->toWebP("{$this->cachePath}/{$this->imageName}.webp");
+        // }
 
         return "{$this->cachePath}/{$this->imageName}.webp";
     }
@@ -353,6 +325,7 @@ class Cropper
 
             return $webPConverted;
         } catch (ConversionFailedException $exception) {
+            $this->exception = $exception;
             return $image;
         }
     }
