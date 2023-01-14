@@ -293,7 +293,7 @@ class Cropper
         $thumb = imagecreatetruecolor($width, $height);
         $source = imagecreatefromwebp($this->imagePath);
 
-        imagealphablending($thumb, true);
+        imagealphablending($thumb, false);
         imagesavealpha($thumb, true);
         imagecopyresampled($thumb, $source, 0, 0, $src_x, $src_y, $width, $height, $src_w, $src_h);
         imagewebp($source, "{$this->cachePath}/{$this->imageName}.webp", $this->qualityWebP);
