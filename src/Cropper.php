@@ -130,7 +130,7 @@ class Cropper
         $filterName = filter_var(mb_strtolower(pathinfo($name)["filename"]), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $formats = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜüÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûýýþÿRr"!@#$%&*()_-+={[}]/?;:.,\\\'<>°ºª';
         $replace = 'aaaaaaaceeeeiiiidnoooooouuuuuybsaaaaaaaceeeeiiiidnoooooouuuyybyrr                                 ';
-        $trimName = trim(strtr(utf8_decode($filterName), utf8_decode($formats), $replace));
+        $trimName = trim(strtr(mb_convert_encoding($filterName, 'ISO-8859-1', 'UTF-8'), mb_convert_encoding($formats, 'ISO-8859-1', 'UTF-8'), $replace));
         $name = str_replace(["-----", "----", "---", "--"], "-", str_replace(" ", "-", $trimName));
 
         $hash = $this->hash($this->imagePath);
@@ -296,15 +296,11 @@ class Cropper
         imagealphablending($thumb, false);
         imagesavealpha($thumb, true);
         imagecopyresampled($thumb, $source, 0, 0, $src_x, $src_y, $width, $height, $src_w, $src_h);
-        imagewebp($source, "{$this->cachePath}/{$this->imageName}.webp", $this->qualityWebP);
+        imagewebp($thumb, "{$this->cachePath}/{$this->imageName}.webp", $this->qualityWebP);
 
         imagedestroy($thumb);
         imagedestroy($source);
-
-        // if ($this->webP) {
-        //     return $this->toWebP("{$this->cachePath}/{$this->imageName}.webp");
-        // }
-
+        
         return "{$this->cachePath}/{$this->imageName}.webp";
     }
 
