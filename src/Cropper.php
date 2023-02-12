@@ -137,7 +137,7 @@ class Cropper
         $widthName = ($width ? "-{$width}" : "");
         $heightName = ($height ? "x{$height}" : "");
 
-        return "{$name}{$widthName}{$heightName}-{$hash}";
+        return "{$name}{$widthName}{$heightName}-{$hash}".filesize($this->imagePath);
     }
 
     /**
